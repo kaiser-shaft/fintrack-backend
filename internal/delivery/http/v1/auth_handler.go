@@ -59,13 +59,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.validate.ValidateStruct(req); err != nil {
-		formattedErrors := validator.FormatErrors(err)
-		if len(formattedErrors) > 0 {
-			render.Error(w, "validation failed", http.StatusUnprocessableEntity, formattedErrors)
-			return
-		}
-		render.Error(w, "validation failed", http.StatusBadRequest, nil)
+	if res := h.validate.Validate(req); res.HasError {
+		render.Error(w, "validation failed", res.StatusCode(), res.Fields)
 		return
 	}
 
@@ -90,13 +85,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.validate.ValidateStruct(req); err != nil {
-		formattedErrors := validator.FormatErrors(err)
-		if len(formattedErrors) > 0 {
-			render.Error(w, "validation failed", http.StatusUnprocessableEntity, formattedErrors)
-			return
-		}
-		render.Error(w, "validation failed", http.StatusBadRequest, nil)
+	if res := h.validate.Validate(req); res.HasError {
+		render.Error(w, "validation failed", res.StatusCode(), res.Fields)
 		return
 	}
 

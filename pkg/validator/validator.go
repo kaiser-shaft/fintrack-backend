@@ -34,11 +34,19 @@ func New() *Validator {
 	return &Validator{validate: v}
 }
 
-func (v *Validator) ValidateStruct(s any) error {
-	return v.validate.Struct(s)
+func (v *Validator) Validate(s any) Result {
+	err := v.validate.Struct(s)
+	if err == nil {
+		return Result{HasError: false}
+	}
+
+	return Result{
+		HasError: true,
+		Fields:   formatErrors(err),
+	}
 }
 
-func FormatErrors(err error) []ValidationErrorResponse {
+func formatErrors(err error) []ValidationErrorResponse {
 	var errors []ValidationErrorResponse
 
 	if validationErrors, ok := err.(validator.ValidationErrors); ok {
