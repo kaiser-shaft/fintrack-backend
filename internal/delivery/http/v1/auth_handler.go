@@ -37,21 +37,6 @@ func NewAuthHandler(
 	}
 }
 
-type RegisterRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
-}
-
-type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-}
-
-type AuthResponse struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-}
-
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -64,7 +49,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.usecase.Register(r.Context(), req.Email, req.Password)
+	err := h.usecase.Register(r.Context(), req.MapToInput())
 	if err != nil {
 		if errors.Is(err, domain.ErrEmailExists) {
 			render.Error(w, err.Error(), http.StatusConflict, nil)
@@ -90,7 +75,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.usecase.Login(r.Context(), req.Email, req.Password)
+	out, err := h.usecase.Login(r.Context(), req.MapToInput())
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) {
 			render.Error(w, err.Error(), http.StatusUnauthorized, nil)
@@ -103,7 +88,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
-		Value:    result.Token,
+		Value:    out.Token,
 		Path:     "/",
 		Secure:   h.cookieSecure,
 		HttpOnly: true,
@@ -111,8 +96,5 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(h.tokenDuration.Seconds()),
 	})
 
-	render.JSON(w, AuthResponse{
-		ID:    result.User.ID.String(),
-		Email: result.User.Email,
-	}, http.StatusOK)
+	render.JSON(w, NewAuthResponse(out.User), http.StatusOK)
 }

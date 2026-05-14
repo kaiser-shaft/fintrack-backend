@@ -27,8 +27,8 @@ func NewAuthUsecase(
 	}
 }
 
-func (u *authUsecase) Register(ctx context.Context, email, password string) error {
-	existUser, err := u.repo.GetByEmail(ctx, email)
+func (u *authUsecase) Register(ctx context.Context, input RegisterInput) error {
+	existUser, err := u.repo.GetByEmail(ctx, input.Email)
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
 		return fmt.Errorf("authUsecase.Register.GetByEmail: %w", err)
 	}
@@ -36,14 +36,14 @@ func (u *authUsecase) Register(ctx context.Context, email, password string) erro
 		return domain.ErrEmailExists
 	}
 
-	passwordHash, err := u.hasher.Hash(password)
+	passwordHash, err := u.hasher.Hash(input.Password)
 	if err != nil {
 		return fmt.Errorf("authUsecase.Register.Hash: %w", err)
 	}
 
 	user := domain.User{
 		ID:           uuid.New(),
-		Email:        email,
+		Email:        input.Email,
 		PasswordHash: passwordHash,
 	}
 
@@ -55,8 +55,8 @@ func (u *authUsecase) Register(ctx context.Context, email, password string) erro
 	return nil
 }
 
-func (u *authUsecase) authenticate(ctx context.Context, email, password string) (*domain.User, error) {
-	user, err := u.repo.GetByEmail(ctx, email)
+func (u *authUsecase) authenticate(ctx context.Context, input LoginInput) (*domain.User, error) {
+	user, err := u.repo.GetByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return nil, domain.ErrInvalidCredentials
@@ -64,15 +64,15 @@ func (u *authUsecase) authenticate(ctx context.Context, email, password string) 
 		return nil, fmt.Errorf("authUsecase.authenticate.GetByEmail: %w", err)
 	}
 
-	if !u.hasher.Compare(password, user.PasswordHash) {
+	if !u.hasher.Compare(input.Password, user.PasswordHash) {
 		return nil, domain.ErrInvalidCredentials
 	}
 
 	return user, nil
 }
 
-func (u *authUsecase) Login(ctx context.Context, email, password string) (*LoginResult, error) {
-	user, err := u.authenticate(ctx, email, password)
+func (u *authUsecase) Login(ctx context.Context, input LoginInput) (*LoginOutput, error) {
+	user, err := u.authenticate(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (u *authUsecase) Login(ctx context.Context, email, password string) (*Login
 		return nil, fmt.Errorf("authUsecase.Login.GenerateToken: %w", err)
 	}
 
-	return &LoginResult{
+	return &LoginOutput{
 		User:  *user,
 		Token: token,
 	}, nil
