@@ -9,8 +9,8 @@ import (
 )
 
 type CreateAccountRequest struct {
-	Name     string `json:"name" validate:"required"`
-	Currency string `json:"currency" validate:"required"`
+	Name     string `json:"name" validate:"required,max=100"`
+	Currency string `json:"currency" validate:"required,max=10"`
 }
 
 func (r CreateAccountRequest) MapToInput(userID uuid.UUID) usecase.CreateAccountInput {
