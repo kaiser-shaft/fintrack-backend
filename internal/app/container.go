@@ -113,8 +113,8 @@ func (c *Container) HTTPServer() (*httpserver.Server, error) {
 			c.cfg.JWT.CookieSecure,
 			c.cfg.JWT.TokenDuration,
 		)
-
-		router := http.NewRouter(authH)
+		jwtManager := c.getJWTManager()
+		router := http.NewRouter(authH, jwtManager)
 
 		c.httpServer = httpserver.New(router, c.cfg.HTTP)
 	}
