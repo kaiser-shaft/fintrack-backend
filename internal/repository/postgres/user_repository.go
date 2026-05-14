@@ -23,7 +23,7 @@ const (
 		INSERT INTO users (id, email, password_hash)
 		VALUES ($1, $2, $3)
 		RETURNING created_at, updated_at`
-	getByEmailQuery = `
+	getUserByEmailQuery = `
 		SELECT id, email, password_hash, created_at, updated_at
 		FROM users
 		WHERE email = $1
@@ -38,11 +38,17 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 		user.Email,
 		user.PasswordHash,
 	)
-	return row.Scan(&user.CreatedAt, &user.UpdatedAt)
+
+	err := row.Scan(&user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return fmt.Errorf("userRepository.Create.Scan: %w", err)
+	}
+
+	return nil
 }
 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	row := r.pool.QueryRow(ctx, getByEmailQuery, email)
+	row := r.pool.QueryRow(ctx, getUserByEmailQuery, email)
 	var user domain.User
 	err := row.Scan(
 		&user.ID,

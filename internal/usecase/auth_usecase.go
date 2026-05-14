@@ -47,8 +47,7 @@ func (u *authUsecase) Register(ctx context.Context, input RegisterInput) error {
 		PasswordHash: passwordHash,
 	}
 
-	err = u.repo.Create(ctx, &user)
-	if err != nil {
+	if err = u.repo.Create(ctx, &user); err != nil {
 		return fmt.Errorf("authUsecase.Register.Create: %w", err)
 	}
 

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kaiser-shaft/fintrack-backend/internal/delivery/http/v1/dto"
 	"github.com/kaiser-shaft/fintrack-backend/internal/domain"
 	"github.com/kaiser-shaft/fintrack-backend/internal/usecase"
 	"github.com/kaiser-shaft/fintrack-backend/pkg/render"
@@ -22,14 +23,14 @@ type AuthHandler struct {
 }
 
 func NewAuthHandler(
-	usecase usecase.AuthUsecase,
+	uc usecase.AuthUsecase,
 	validate *validator.Validator,
 	logger *slog.Logger,
 	cookieSecure bool,
 	tokenDuration time.Duration,
 ) *AuthHandler {
 	return &AuthHandler{
-		usecase:       usecase,
+		usecase:       uc,
 		validate:      validate,
 		logger:        logger,
 		cookieSecure:  cookieSecure,
@@ -38,7 +39,7 @@ func NewAuthHandler(
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req RegisterRequest
+	var req dto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, "invalid request body", http.StatusBadRequest, nil)
 		return
@@ -64,7 +65,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req LoginRequest
+	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, "invalid request body", http.StatusBadRequest, nil)
 		return
@@ -96,5 +97,5 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(h.tokenDuration.Seconds()),
 	})
 
-	render.JSON(w, NewAuthResponse(out.User), http.StatusOK)
+	render.JSON(w, dto.NewAuthResponse(out.User), http.StatusOK)
 }

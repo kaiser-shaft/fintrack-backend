@@ -2,10 +2,20 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+var (
+	ErrAccountNameRequired = errors.New("account name is required")
+)
+
+type AccountRepository interface {
+	Create(ctx context.Context, account *Account) error
+	GetByUserID(ctx context.Context, userID uuid.UUID) ([]Account, error)
+}
 
 type Account struct {
 	ID        uuid.UUID
@@ -15,9 +25,4 @@ type Account struct {
 	Currency  string
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-type AccountRepository interface {
-	Create(ctx context.Context, account *Account) error
-	GetByUserID(ctx context.Context, userID uuid.UUID) ([]Account, error)
 }

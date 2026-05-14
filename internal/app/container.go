@@ -31,9 +31,11 @@ type Container struct {
 	reqValidator *validator.Validator
 	jwtManager   *jwt.Manager
 
-	userRepository domain.UserRepository
+	userRepository    domain.UserRepository
+	accountRepository domain.AccountRepository
 
-	authUsecase usecase.AuthUsecase
+	authUsecase    usecase.AuthUsecase
+	accountUsecase usecase.AccountUsecase
 
 	httpServer *httpserver.Server
 }
@@ -87,6 +89,13 @@ func (c *Container) UserRepository() (domain.UserRepository, error) {
 	return c.getUserRepository()
 }
 
+func (c *Container) AccountRepository() (domain.AccountRepository, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.getAccountRepository()
+}
+
 func (c *Container) AuthUsecase() (usecase.AuthUsecase, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -99,13 +108,13 @@ func (c *Container) HTTPServer() (*httpserver.Server, error) {
 	defer c.mu.Unlock()
 
 	if c.httpServer == nil {
+		reqValidator := c.getReqValidator()
+		logger := c.getLogger()
+
 		authUC, err := c.getAuthUsecase()
 		if err != nil {
 			return nil, fmt.Errorf("container.HTTPServer: %w", err)
 		}
-		reqValidator := c.getReqValidator()
-		logger := c.getLogger()
-
 		authH := v1.NewAuthHandler(
 			authUC,
 			reqValidator,
@@ -113,8 +122,23 @@ func (c *Container) HTTPServer() (*httpserver.Server, error) {
 			c.cfg.JWT.CookieSecure,
 			c.cfg.JWT.TokenDuration,
 		)
+
+		accountUC, err := c.getAccountUsecase()
+		if err != nil {
+			return nil, fmt.Errorf("container.HTTPServer: %w", err)
+		}
+		accountH := v1.NewAccountHandler(
+			accountUC,
+			reqValidator,
+			logger,
+		)
+
 		jwtManager := c.getJWTManager()
-		router := http.NewRouter(authH, jwtManager)
+		router := http.NewRouter(
+			authH,
+			accountH,
+			jwtManager,
+		)
 
 		c.httpServer = httpserver.New(router, c.cfg.HTTP)
 	}
@@ -193,11 +217,23 @@ func (c *Container) getUserRepository() (domain.UserRepository, error) {
 	return c.userRepository, nil
 }
 
+func (c *Container) getAccountRepository() (domain.AccountRepository, error) {
+	if c.accountRepository == nil {
+		pool, err := c.getPgPool()
+		if err != nil {
+			return nil, fmt.Errorf("container.getAccountRepository: %w", err)
+		}
+		c.accountRepository = postgres.NewAccountRepository(pool.Pool)
+	}
+
+	return c.accountRepository, nil
+}
+
 func (c *Container) getAuthUsecase() (usecase.AuthUsecase, error) {
 	if c.authUsecase == nil {
 		userRepo, err := c.getUserRepository()
 		if err != nil {
-			return nil, fmt.Errorf("container.AuthUsecase: %w", err)
+			return nil, fmt.Errorf("container.getAuthUsecase: %w", err)
 		}
 		passHasher := c.getPassHasher()
 		jwtManager := c.getJWTManager()
@@ -210,4 +246,16 @@ func (c *Container) getAuthUsecase() (usecase.AuthUsecase, error) {
 	}
 
 	return c.authUsecase, nil
+}
+
+func (c *Container) getAccountUsecase() (usecase.AccountUsecase, error) {
+	if c.accountUsecase == nil {
+		accountRepo, err := c.getAccountRepository()
+		if err != nil {
+			return nil, fmt.Errorf("container.getAccountUsecase: %w", err)
+		}
+		c.accountUsecase = usecase.NewAccountUsecase(accountRepo)
+	}
+
+	return c.accountUsecase, nil
 }
