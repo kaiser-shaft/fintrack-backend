@@ -13,11 +13,11 @@ type CreateAccountRequest struct {
 	Currency string `json:"currency" validate:"required,max=10"`
 }
 
-func (r CreateAccountRequest) ToInput(userID uuid.UUID) usecase.CreateAccountInput {
+func (req CreateAccountRequest) ToInput(userID uuid.UUID) usecase.CreateAccountInput {
 	return usecase.CreateAccountInput{
 		UserID:   userID,
-		Name:     r.Name,
-		Currency: r.Currency,
+		Name:     req.Name,
+		Currency: req.Currency,
 	}
 }
 

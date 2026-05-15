@@ -43,7 +43,7 @@ func (r *categoryRepository) Create(ctx context.Context, category *domain.Catego
 	}
 	return nil
 }
-func (r *categoryRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Category, error) {
+func (r *categoryRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Category, error) {
 	rows, err := r.pool.Query(ctx, getCategoriesByUserIDQuery, userID)
 	if err != nil {
 		return nil, fmt.Errorf("categoryRepository.GetByUserID.Query: %w", err)

@@ -13,11 +13,11 @@ type CreateCategoryRequest struct {
 	Type string `json:"type" validate:"max=20"`
 }
 
-func (r CreateCategoryRequest) ToInput(userID uuid.UUID) usecase.CreateCategoryInput {
+func (req CreateCategoryRequest) ToInput(userID uuid.UUID) usecase.CreateCategoryInput {
 	return usecase.CreateCategoryInput{
 		UserID: userID,
-		Name:   r.Name,
-		Type:   domain.CategoryType(r.Type),
+		Name:   req.Name,
+		Type:   domain.CategoryType(req.Type),
 	}
 }
 

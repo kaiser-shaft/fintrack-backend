@@ -8,25 +8,25 @@ import (
 	"github.com/kaiser-shaft/fintrack-backend/internal/domain"
 )
 
-type AccountUsecase interface {
-	Create(ctx context.Context, input CreateAccountInput) (*domain.Account, error)
-	GetByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Account, error)
-}
-
 type CreateAccountInput struct {
 	UserID   uuid.UUID
 	Name     string
 	Currency string
 }
 
-func (i CreateAccountInput) ToDomain() domain.Account {
+func (input CreateAccountInput) ToDomain() domain.Account {
 	return domain.Account{
 		ID:       uuid.New(),
-		UserID:   i.UserID,
-		Name:     i.Name,
+		UserID:   input.UserID,
+		Name:     input.Name,
 		Balance:  0,
-		Currency: i.Currency,
+		Currency: input.Currency,
 	}
+}
+
+type AccountUsecase interface {
+	Create(ctx context.Context, input CreateAccountInput) (*domain.Account, error)
+	List(ctx context.Context, userID uuid.UUID) ([]domain.Account, error)
 }
 
 type accountUsecase struct {
@@ -50,8 +50,8 @@ func (u *accountUsecase) Create(ctx context.Context, input CreateAccountInput) (
 	return &account, nil
 }
 
-func (u *accountUsecase) GetByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Account, error) {
-	accounts, err := u.repo.GetByUserID(ctx, userID)
+func (u *accountUsecase) List(ctx context.Context, userID uuid.UUID) ([]domain.Account, error) {
+	accounts, err := u.repo.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("accountUsecase.GetByUserID: %w", err)
 	}

@@ -71,7 +71,7 @@ func (h *AccountHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accounts, err := h.usecase.GetByUserID(r.Context(), userID)
+	accounts, err := h.usecase.List(r.Context(), userID)
 	if err != nil {
 		h.logger.Error("failed to get accounts", slog.Any("error", err))
 		render.Error(w, "internal server error", http.StatusInternalServerError, nil)

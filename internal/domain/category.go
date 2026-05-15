@@ -39,5 +39,5 @@ type Category struct {
 
 type CategoryRepository interface {
 	Create(ctx context.Context, category *Category) error
-	GetByUserID(ctx context.Context, userID uuid.UUID) ([]Category, error)
+	FindByUserID(ctx context.Context, userID uuid.UUID) ([]Category, error)
 }

@@ -30,14 +30,17 @@ type Container struct {
 	passHasher   *hasher.PasswordHasher
 	reqValidator *validator.Validator
 	jwtManager   *jwt.Manager
+	txManager    *pgpool.TransactionManager
 
-	userRepository     domain.UserRepository
-	accountRepository  domain.AccountRepository
-	categoryRepository domain.CategoryRepository
+	userRepository        domain.UserRepository
+	accountRepository     domain.AccountRepository
+	categoryRepository    domain.CategoryRepository
+	transactionRepository domain.TransactionRepository
 
-	authUsecase     usecase.AuthUsecase
-	accountUsecase  usecase.AccountUsecase
-	categoryUsecase usecase.CategoryUsecase
+	authUsecase        usecase.AuthUsecase
+	accountUsecase     usecase.AccountUsecase
+	categoryUsecase    usecase.CategoryUsecase
+	transactionUseCase usecase.TransactionUsecase
 
 	httpServer *httpserver.Server
 }
@@ -84,6 +87,13 @@ func (c *Container) JWTManager() *jwt.Manager {
 	return c.getJWTManager()
 }
 
+func (c *Container) TxManager() (*pgpool.TransactionManager, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.getTxManager()
+}
+
 func (c *Container) UserRepository() (domain.UserRepository, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -103,6 +113,13 @@ func (c *Container) CategoryRepository() (domain.CategoryRepository, error) {
 	defer c.mu.Unlock()
 
 	return c.getCategoryRepository()
+}
+
+func (c *Container) TransactionRepository() (domain.TransactionRepository, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.getTransactionRepository()
 }
 
 func (c *Container) AuthUsecase() (usecase.AuthUsecase, error) {
@@ -225,6 +242,18 @@ func (c *Container) getJWTManager() *jwt.Manager {
 	return c.jwtManager
 }
 
+func (c *Container) getTxManager() (*pgpool.TransactionManager, error) {
+	if c.txManager == nil {
+		pool, err := c.getPgPool()
+		if err != nil {
+			return nil, fmt.Errorf("container.getTXManager: %w", err)
+		}
+		c.txManager = pgpool.NewTransactionManager(pool.Pool)
+	}
+
+	return c.txManager, nil
+}
+
 func (c *Container) getUserRepository() (domain.UserRepository, error) {
 	if c.userRepository == nil {
 		pool, err := c.getPgPool()
@@ -259,6 +288,18 @@ func (c *Container) getCategoryRepository() (domain.CategoryRepository, error) {
 	}
 
 	return c.categoryRepository, nil
+}
+
+func (c *Container) getTransactionRepository() (domain.TransactionRepository, error) {
+	if c.transactionRepository == nil {
+		pool, err := c.getPgPool()
+		if err != nil {
+			return nil, fmt.Errorf("container.getTransactionRepository: %w", err)
+		}
+		c.transactionRepository = postgres.NewTransactionRepository(pool.Pool)
+	}
+
+	return c.transactionRepository, nil
 }
 
 func (c *Container) getAuthUsecase() (usecase.AuthUsecase, error) {
@@ -302,4 +343,28 @@ func (c *Container) getCategoryUsecase() (usecase.CategoryUsecase, error) {
 	}
 
 	return c.categoryUsecase, nil
+}
+
+func (c *Container) getTransactionUsecase() (usecase.TransactionUsecase, error) {
+	if c.transactionUseCase == nil {
+		transactionRepo, err := c.getTransactionRepository()
+		if err != nil {
+			return nil, fmt.Errorf("container.getTransactionUsecase.transactionRepo: %w", err)
+		}
+		accountRepo, err := c.getAccountRepository()
+		if err != nil {
+			return nil, fmt.Errorf("container.getTransactionUsecase.accountRepo: %w", err)
+		}
+		txManager, err := c.getTxManager()
+		if err != nil {
+			return nil, fmt.Errorf("container.getTransactionUsecase.txManager: %w", err)
+		}
+		c.transactionUseCase = usecase.NewTransactionUsecase(
+			transactionRepo,
+			accountRepo,
+			txManager,
+		)
+	}
+
+	return c.transactionUseCase, nil
 }

@@ -10,10 +10,10 @@ type RegisterRequest struct {
 	Password string `json:"password" validate:"required,min=8"`
 }
 
-func (r RegisterRequest) ToInput() usecase.RegisterInput {
+func (req RegisterRequest) ToInput() usecase.RegisterInput {
 	return usecase.RegisterInput{
-		Email:    r.Email,
-		Password: r.Password,
+		Email:    req.Email,
+		Password: req.Password,
 	}
 }
 
@@ -22,10 +22,10 @@ type LoginRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-func (r LoginRequest) ToInput() usecase.LoginInput {
+func (req LoginRequest) ToInput() usecase.LoginInput {
 	return usecase.LoginInput{
-		Email:    r.Email,
-		Password: r.Password,
+		Email:    req.Email,
+		Password: req.Password,
 	}
 }
 

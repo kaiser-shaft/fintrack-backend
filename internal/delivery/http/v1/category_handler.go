@@ -71,7 +71,7 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	categories, err := h.usecase.GetByUserID(r.Context(), userID)
+	categories, err := h.usecase.List(r.Context(), userID)
 	if err != nil {
 		h.logger.Error("failed to get categories", slog.Any("error", err))
 		render.Error(w, "internal server error", http.StatusInternalServerError, nil)
