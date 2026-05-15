@@ -8,6 +8,27 @@ import (
 	"github.com/kaiser-shaft/fintrack-backend/internal/domain"
 )
 
+type AccountUsecase interface {
+	Create(ctx context.Context, input CreateAccountInput) (*domain.Account, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Account, error)
+}
+
+type CreateAccountInput struct {
+	UserID   uuid.UUID
+	Name     string
+	Currency string
+}
+
+func (i CreateAccountInput) ToDomain() domain.Account {
+	return domain.Account{
+		ID:       uuid.New(),
+		UserID:   i.UserID,
+		Name:     i.Name,
+		Balance:  0,
+		Currency: i.Currency,
+	}
+}
+
 type accountUsecase struct {
 	repo domain.AccountRepository
 }

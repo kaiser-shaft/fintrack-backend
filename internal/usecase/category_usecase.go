@@ -8,6 +8,26 @@ import (
 	"github.com/kaiser-shaft/fintrack-backend/internal/domain"
 )
 
+type CategoryUsecase interface {
+	Create(ctx context.Context, input CreateCategoryInput) (*domain.Category, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Category, error)
+}
+
+type CreateCategoryInput struct {
+	UserID uuid.UUID
+	Name   string
+	Type   domain.CategoryType
+}
+
+func (i CreateCategoryInput) ToDomain() domain.Category {
+	return domain.Category{
+		ID:     uuid.New(),
+		UserID: i.UserID,
+		Name:   i.Name,
+		Type:   i.Type,
+	}
+}
+
 type categoryUsecase struct {
 	repo domain.CategoryRepository
 }
