@@ -21,14 +21,7 @@ func (u *accountUsecase) Create(ctx context.Context, input CreateAccountInput) (
 		return nil, domain.ErrAccountNameRequired
 	}
 
-	account := domain.Account{
-		ID:       uuid.New(),
-		UserID:   input.UserID,
-		Name:     input.Name,
-		Balance:  0,
-		Currency: input.Currency,
-	}
-
+	account := input.ToDomain()
 	if err := u.repo.Create(ctx, &account); err != nil {
 		return nil, fmt.Errorf("accountUsecase.Create: %w", err)
 	}

@@ -11,6 +11,7 @@ import (
 func NewRouter(
 	authHandler *v1.AuthHandler,
 	accountHandler *v1.AccountHandler,
+	categoryHandler *v1.CategoryHandler,
 	jwtManager *jwt.Manager,
 ) *chi.Mux {
 	r := chi.NewRouter()
@@ -29,7 +30,12 @@ func NewRouter(
 
 			r.Route("/accounts", func(r chi.Router) {
 				r.Post("/", accountHandler.Create)
-				r.Get("/", accountHandler.GetAccounts)
+				r.Get("/", accountHandler.List)
+			})
+
+			r.Route("/categories", func(r chi.Router) {
+				r.Post("/", categoryHandler.Create)
+				r.Get("/", categoryHandler.List)
 			})
 		})
 	})

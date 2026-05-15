@@ -10,7 +10,7 @@ type RegisterRequest struct {
 	Password string `json:"password" validate:"required,min=8"`
 }
 
-func (r RegisterRequest) MapToInput() usecase.RegisterInput {
+func (r RegisterRequest) ToInput() usecase.RegisterInput {
 	return usecase.RegisterInput{
 		Email:    r.Email,
 		Password: r.Password,
@@ -22,7 +22,7 @@ type LoginRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-func (r LoginRequest) MapToInput() usecase.LoginInput {
+func (r LoginRequest) ToInput() usecase.LoginInput {
 	return usecase.LoginInput{
 		Email:    r.Email,
 		Password: r.Password,

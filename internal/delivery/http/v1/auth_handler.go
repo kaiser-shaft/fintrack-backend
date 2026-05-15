@@ -50,7 +50,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.usecase.Register(r.Context(), req.MapToInput())
+	err := h.usecase.Register(r.Context(), req.ToInput())
 	if err != nil {
 		if errors.Is(err, domain.ErrEmailExists) {
 			render.Error(w, err.Error(), http.StatusConflict, nil)
@@ -76,7 +76,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out, err := h.usecase.Login(r.Context(), req.MapToInput())
+	out, err := h.usecase.Login(r.Context(), req.ToInput())
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) {
 			render.Error(w, err.Error(), http.StatusUnauthorized, nil)

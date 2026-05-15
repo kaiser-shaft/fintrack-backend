@@ -13,7 +13,7 @@ type CreateAccountRequest struct {
 	Currency string `json:"currency" validate:"required,max=10"`
 }
 
-func (r CreateAccountRequest) MapToInput(userID uuid.UUID) usecase.CreateAccountInput {
+func (r CreateAccountRequest) ToInput(userID uuid.UUID) usecase.CreateAccountInput {
 	return usecase.CreateAccountInput{
 		UserID:   userID,
 		Name:     r.Name,
@@ -43,14 +43,8 @@ func NewAccountResponse(account domain.Account) AccountResponse {
 	}
 }
 
-type GetAccountsResponse struct {
-	Data []AccountResponse `json:"data"`
-}
-
-func NewGetAccountsResponse(accounts []domain.Account) GetAccountsResponse {
-	data := make([]AccountResponse, len(accounts))
-	for i, account := range accounts {
-		data[i] = NewAccountResponse(account)
+func NewAccountListResponse(accounts []domain.Account) ListResponse[AccountResponse] {
+	return ListResponse[AccountResponse]{
+		Data: MapSlice(accounts, NewAccountResponse),
 	}
-	return GetAccountsResponse{Data: data}
 }

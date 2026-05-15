@@ -31,11 +31,13 @@ type Container struct {
 	reqValidator *validator.Validator
 	jwtManager   *jwt.Manager
 
-	userRepository    domain.UserRepository
-	accountRepository domain.AccountRepository
+	userRepository     domain.UserRepository
+	accountRepository  domain.AccountRepository
+	categoryRepository domain.CategoryRepository
 
-	authUsecase    usecase.AuthUsecase
-	accountUsecase usecase.AccountUsecase
+	authUsecase     usecase.AuthUsecase
+	accountUsecase  usecase.AccountUsecase
+	categoryUsecase usecase.CategoryUsecase
 
 	httpServer *httpserver.Server
 }
@@ -96,6 +98,13 @@ func (c *Container) AccountRepository() (domain.AccountRepository, error) {
 	return c.getAccountRepository()
 }
 
+func (c *Container) CategoryRepository() (domain.CategoryRepository, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.getCategoryRepository()
+}
+
 func (c *Container) AuthUsecase() (usecase.AuthUsecase, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -133,10 +142,21 @@ func (c *Container) HTTPServer() (*httpserver.Server, error) {
 			logger,
 		)
 
+		categoryUC, err := c.getCategoryUsecase()
+		if err != nil {
+			return nil, fmt.Errorf("container.HTTPServer: %w", err)
+		}
+		categoryH := v1.NewCategoryHandler(
+			categoryUC,
+			reqValidator,
+			logger,
+		)
+
 		jwtManager := c.getJWTManager()
 		router := http.NewRouter(
 			authH,
 			accountH,
+			categoryH,
 			jwtManager,
 		)
 
@@ -229,6 +249,18 @@ func (c *Container) getAccountRepository() (domain.AccountRepository, error) {
 	return c.accountRepository, nil
 }
 
+func (c *Container) getCategoryRepository() (domain.CategoryRepository, error) {
+	if c.categoryRepository == nil {
+		pool, err := c.getPgPool()
+		if err != nil {
+			return nil, fmt.Errorf("container.getCategoryRepository: %w", err)
+		}
+		c.categoryRepository = postgres.NewCategoryRepository(pool.Pool)
+	}
+
+	return c.categoryRepository, nil
+}
+
 func (c *Container) getAuthUsecase() (usecase.AuthUsecase, error) {
 	if c.authUsecase == nil {
 		userRepo, err := c.getUserRepository()
@@ -258,4 +290,16 @@ func (c *Container) getAccountUsecase() (usecase.AccountUsecase, error) {
 	}
 
 	return c.accountUsecase, nil
+}
+
+func (c *Container) getCategoryUsecase() (usecase.CategoryUsecase, error) {
+	if c.categoryUsecase == nil {
+		categoryRepo, err := c.getCategoryRepository()
+		if err != nil {
+			return nil, fmt.Errorf("container.getCategoryUsecase: %w", err)
+		}
+		c.categoryUsecase = usecase.NewCategoryUsecase(categoryRepo)
+	}
+
+	return c.categoryUsecase, nil
 }
